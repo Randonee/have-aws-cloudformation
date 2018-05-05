@@ -1,0 +1,12 @@
+{
+  "name": "haxe-aws-cloudformation",
+  "url" : "https://github.com/Randonee/haxe-aws-cloudformation.git",
+  "license": "MIT",
+  "tags": ["aws", "buildtool"],
+  "description": "Automation for aws cloudfront",
+  "version": "0.0.1-alpha",
+  "releasenote": "alpha",
+  "contributors": ["Aaron"],
+  "classPath": "src/",
+  "dependencies": {}
+}
