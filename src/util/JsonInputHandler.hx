@@ -1,6 +1,9 @@
 package util;
 
 import sys.io.File;
+import sys.FileSystem;
+
+using StringTools;
 
 class JsonInputHandler{
 
@@ -10,19 +13,20 @@ class JsonInputHandler{
     }
 
     public function handle(str:String):Dynamic{
-        var splitter = ~/(:::[A-Za-z0-9_ ()&|!+=\/><*."-]+:::|\$\$([A-Za-z0-9_-]+)\()/;
-        var oldSplitter = Reflect.field(haxe.Template, "splitter");
-        Reflect.setField(haxe.Template, "splitter", splitter);
-        var template = new haxe.Template(str);
+        var template = new util.Template(str);
         var output = template.execute({}, this);
-        Reflect.setField(haxe.Template, "splitter", oldSplitter);
         return haxe.Json.parse(output);
     }
 
     function file(resolve:String->Dynamic, path:String):String{
+        if(!FileSystem.exists(baseDir + path)) throw "File Not Found: " + baseDir + path;
         var content = File.getContent(baseDir + path);
-        var template = new haxe.Template(content);
+        var template = new util.Template(content);
         return template.execute({}, this);
+    }
+
+    function urlEncode(resolve:String->Dynamic, str:String):String{
+        return str.urlEncode();
     }
 
     function base64File(resolve:String->Dynamic, path:String):String{

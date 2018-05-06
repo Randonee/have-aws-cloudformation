@@ -65,26 +65,22 @@ class Main{
 
 		config = new JsonInputHandler(configDir).handle(sys.io.File.getContent(configDir + configFile));
 
-		trace(config);
-
 		cloudFormation = new CloudFormation(config.creds.accessKey, config.creds.secretKey);
 		cloudFormation.onComplete = onComplete;
 		cloudFormation.onError = onError;
 
-		
-
 		switch(command){
-			case "make": cloudFormation.createStack(config.stack);
+			case "create": cloudFormation.createStack(config.stack);
 			case "update": cloudFormation.updateStack(config.stack);
 		}
 	}
 
 	static function onComplete(sig:SignatureVersion4){
-		trace("\n\n" + sig.request + "\n\n\n" +sig.rawResponse);
+		Lib.println("Complete" + "\n\n" +sig.rawResponse);
 	}
 
 	static function onError(sig:SignatureVersion4){
-		trace("Error:" + sig.responseCode + ":" + sig.error + "\n" + sig.request + "\n\n\n" + sig.response);
+		Lib.println("Error:" + sig.responseCode + "\n" + sig.error + "\n" + sig.response);
 	}
 
 	public static function getHaxelib(library:String):String
