@@ -25,8 +25,19 @@ class JsonInputHandler{
         return template.execute({}, this);
     }
 
+    function zipBase64(resolve:String->Dynamic, path:String):String{
+        var zip = new util.Zip();
+        var name = path.split("/").pop();
+        zip.add(baseDir + path, name);
+        return haxe.crypto.Base64.encode(zip.getBytes());
+    }
+
     function urlEncode(resolve:String->Dynamic, str:String):String{
         return str.urlEncode();
+    }
+
+    function quoteEscape(resolve:String->Dynamic, str:String):String{
+        return str.replace("\"", "\\\"");
     }
 
     function base64File(resolve:String->Dynamic, path:String):String{
