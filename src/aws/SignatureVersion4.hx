@@ -30,7 +30,7 @@ typedef SignatureVersion4Props = {
 
 class SignatureVersion4{
 
-	var props:SignatureVersion4Props;
+	public var props:SignatureVersion4Props;
 	var time:UnixDate = UnixDate.now();
 	var endpoint:String = "";
 	var used:Bool = false;

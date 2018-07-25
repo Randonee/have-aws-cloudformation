@@ -11,7 +11,7 @@ class CloudFormation extends SignatureVersion4{
 				secretKey:secretKey,
 				method:null,
 				service:'cloudformation',
-				host:'cloudformation.us-west-2.amazonaws.com',
+				host:'',
 				region:'us-west-2',
 				contentType:'application/json',
 				amzTarget:null,
@@ -23,7 +23,12 @@ class CloudFormation extends SignatureVersion4{
 			super("", props);
 	}
 
+	function setHost(){
+		props.host = 'cloudformation.' + props.region + '.amazonaws.com';
+	}
+
 	public function createStack(data:CreateStackRequestData){
+		setHost();
 		props.method = "POST";
 		props.path = "/";
 		endpoint = "https://" + props.host + props.path;
@@ -35,6 +40,7 @@ class CloudFormation extends SignatureVersion4{
 	}
 
 	public function updateStack(data:UpdateStackRequestData){
+		setHost();
 		props.method = "POST";
 		props.path = "/";
 		endpoint = "https://" + props.host + props.path;
@@ -106,6 +112,7 @@ class CloudFormation extends SignatureVersion4{
 
 
 	public function listStacks(){
+		setHost();
 		props.method = "POST";
 		props.path = "/";
 		endpoint = "https://" + props.host + props.path;
@@ -119,6 +126,7 @@ class CloudFormation extends SignatureVersion4{
 
 
 	public function deleteStack(stackName:String){
+		setHost();
 		props.method = "POST";
 		props.path = "/";
 		endpoint = "https://" + props.host + props.path;

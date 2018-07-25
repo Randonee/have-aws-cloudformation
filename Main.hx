@@ -12,6 +12,7 @@ class Main{
 	static var configDir:String;
 	static var command:String;
 	static var config:Dynamic;
+	static var templateBody:Dynamic;
 	static var cloudFormation:CloudFormation;
 
     public static function main(){
@@ -25,26 +26,9 @@ class Main{
 			Lib.println('create            			Creates a stack using the directory "cloudformation" and the config "config.json"');
 			Lib.println('create [config] [baseDir]  		Creates a stack using the directory "cloudformation" and the config file [config]');
 			Lib.println('update            			Updates a stack. Args are the same as create');
-			Lib.println('adBucket [name] [path creds file]   	Creates a new S3 bucket');
 			Lib.println('');
 
 			return;
-		}
-		else if(args[0] == "addBucket"){
-			trace(args);
-			if(args.length != 4){
-				throw ("addBucket requires the name of the bucket and path to creds file as only parameters.");
-			}	
-
-			var path = args[2];
-			if(path.charAt(0) != "/")
-				path = args[3] + path;
-
-			var creds = haxe.Json.parse(sys.io.File.getContent(path));
-			var s3 = new S3(creds.accessKey, creds.secretKey);
-			s3.onComplete = onComplete;
-			s3.onError = onError;
-			s3.createBucket(args[1]);
 		}
 		else if(args[0] == "cli_install")
 		{
@@ -61,6 +45,55 @@ class Main{
 		else{
 			handleCloudFormation();
 		}
+	}
+
+	static function getRootPath(path:String, rootPath:String):String{
+		var p = path;
+		if(path.charAt(0) != "/")
+			p = rootPath + path;
+	
+		return p;
+	}
+
+	static function uploadStack(){
+		var addObjectS3 = new S3(config.creds.accessKey, config.creds.secretKey);
+		var headS3 = new S3(config.creds.accessKey, config.creds.secretKey);
+		var createBucketS3 = new S3(config.creds.accessKey, config.creds.secretKey);
+
+		addObjectS3.props.region = config.region;
+		headS3.props.region = config.region;
+		createBucketS3.props.region = config.region;
+		
+		createBucketS3.onError = onError;
+		addObjectS3.onError = onError;
+
+
+		var addObject = function(){
+			addObjectS3.addBucketObject("stack.json", config.bucketName, haxe.Json.stringify(templateBody));
+		}
+
+		headS3.onComplete = function(sig){
+			addObject();};
+
+		headS3.onError = function(sig){
+			if(sig.responseCode == 404){
+				createBucketS3.createBucket(config.bucketName);
+			}
+			else{
+				onError(sig);
+			}
+		}
+
+		createBucketS3.onComplete = function(sig){addObject();};
+
+		addObjectS3.onComplete = function(sig){
+			switch(command){
+				case "create": cloudFormation.createStack(config.stack);
+				case "update": cloudFormation.updateStack(config.stack);
+			}
+		}
+
+		headS3.headBucket(config.bucketName);
 	}
 
 	static function handleCloudFormation(){
@@ -83,15 +116,17 @@ class Main{
 			configFile = args[2];
 
 		config = new JsonInputHandler(configDir).handle(sys.io.File.getContent(configDir + configFile));
+		templateBody = config.stack.TemplateBody;
+		config.stack.TemplateBody = null;
+		config.stack.TemplateURL = "https://s3-" + config.region + ".amazonaws.com/" + config.stackName + "/stack.json";
+
 
 		cloudFormation = new CloudFormation(config.creds.accessKey, config.creds.secretKey);
+		cloudFormation.props.region = config.region;
 		cloudFormation.onComplete = onComplete;
 		cloudFormation.onError = onError;
-
-		switch(command){
-			case "create": cloudFormation.createStack(config.stack);
-			case "update": cloudFormation.updateStack(config.stack);
-		}
+		
+		uploadStack();
 	}
 
 	static function onComplete(sig:SignatureVersion4){

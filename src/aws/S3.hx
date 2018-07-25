@@ -1,5 +1,7 @@
 package aws;
 
+import sys.io.File;
+
 class S3 extends SignatureVersion4{
 
     public function new(accessKey:String, secretKey:String){
@@ -8,7 +10,7 @@ class S3 extends SignatureVersion4{
 				secretKey:secretKey,
 				method:null,
 				service:'s3',
-				host:'s3.amazonaws.com',
+				host:'',
 				region:'us-west-2',
 				contentType:'application/json',
 				amzTarget:null,
@@ -29,6 +31,21 @@ class S3 extends SignatureVersion4{
   </CreateBucketConfiguration>';
 		call();
     }
+
+	public function addBucketObject(name:String, bucketName:String, data:String){
+        props.method = "PUT";
+        props.host = bucketName + ".s3-" + props.region + ".amazonaws.com";
+		props.path = "/" + name;
+		requestPrameters = data;
+		call();
+    }
+
+	public function headBucket(name:String){
+		props.method = "HEAD";
+        props.host = name + ".s3-" + props.region + ".amazonaws.com";
+		props.path = "/";
+		call();
+	}
 
 
 }
