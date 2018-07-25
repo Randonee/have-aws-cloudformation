@@ -27,18 +27,14 @@ class Main{
 
 			return;
 		}
-		else if(args[0] == "b"){
+		else if(args[0] == "addBucket"){
+			if(args.length != 3){
+				throw ("addBucket requires the name of the bucket as the only parameter.");
+			}
 			var s3 = new S3("AKIAJQ4BNAYZO4LBCLXQ", "CiJ1AOSRv2/D2oR6hagZq8nEtp3ICq1SSdVw7OYB");
-			s3.onComplete = function(sig:SignatureVersion4){
-				
-			};
-			s3.onError = function(sig:SignatureVersion4){
-				trace(sig.error);
-				trace(sig.responseCode);
-				trace(sig.request);
-				trace(sig.rawResponse);
-			};
-			s3.createBucket("bucket1");
+			s3.onComplete = onComplete;
+			s3.onError = onError;
+			s3.createBucket(args[1]);
 		}
 		else if(args[0] == "cli_install")
 		{
@@ -93,7 +89,7 @@ class Main{
 	}
 
 	static function onError(sig:SignatureVersion4){
-		Lib.println("Error:" + sig.responseCode + "\n" + sig.error + "\n" + sig.response);
+		Lib.println("Error:" + sig.responseCode + "\n" + sig.error + "\n\n" + sig.rawResponse);
 	}
 
 	public static function getHaxelib(library:String):String

@@ -23,7 +23,10 @@ class S3 extends SignatureVersion4{
 
     public function createBucket(name:String){
         props.method = "PUT";
-        props.host = name + ".s3-us-west-2.amazonaws.com";
+        props.host = name + ".s3-" + props.region + ".amazonaws.com";
+		requestPrameters = '<CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"> 
+  <LocationConstraint>' + props.region + '</LocationConstraint> 
+  </CreateBucketConfiguration>';
 		call();
     }
 
