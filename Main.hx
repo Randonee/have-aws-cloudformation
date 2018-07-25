@@ -19,19 +19,23 @@ class Main{
 
 		if(args.length == 2 && (args[0] == "?" || args[0] == "help") )
 		{
+			Lib.println('');
 			Lib.println("Commands");
-			Lib.println('cli_install			installs command line shortcut "hcf"');
-			Lib.println('create            		Creates a stack using the directory "cloudformation" and the config "config.json"');
-			Lib.println('create [config] [baseDir]  	Creates a stack using the directory "cloudformation" and the config file [config]');
-			Lib.println('update            		Updates a stack. Args are the same as create');
+			Lib.println('cli_install				installs command line shortcut "hcf"');
+			Lib.println('create            			Creates a stack using the directory "cloudformation" and the config "config.json"');
+			Lib.println('create [config] [baseDir]  		Creates a stack using the directory "cloudformation" and the config file [config]');
+			Lib.println('update            			Updates a stack. Args are the same as create');
+			Lib.println('adBucket [name] [path creds file]   	Creates a new S3 bucket');
+			Lib.println('');
 
 			return;
 		}
 		else if(args[0] == "addBucket"){
-			if(args.length != 3){
-				throw ("addBucket requires the name of the bucket as the only parameter.");
+			if(args.length != 4){
+				throw ("addBucket requires the name of the bucket and path to creds file as only parameters.");
 			}
-			var s3 = new S3("AKIAJQ4BNAYZO4LBCLXQ", "CiJ1AOSRv2/D2oR6hagZq8nEtp3ICq1SSdVw7OYB");
+			config = new JsonInputHandler(configDir).handle(sys.io.File.getContent(args[2]));
+			var s3 = new S3(config.creds.accessKey, config.creds.secretKey);
 			s3.onComplete = onComplete;
 			s3.onError = onError;
 			s3.createBucket(args[1]);
