@@ -27,6 +27,19 @@ class Main{
 
 			return;
 		}
+		else if(args[0] == "b"){
+			var s3 = new S3("AKIAJQ4BNAYZO4LBCLXQ", "CiJ1AOSRv2/D2oR6hagZq8nEtp3ICq1SSdVw7OYB");
+			s3.onComplete = function(sig:SignatureVersion4){
+				
+			};
+			s3.onError = function(sig:SignatureVersion4){
+				trace(sig.error);
+				trace(sig.responseCode);
+				trace(sig.request);
+				trace(sig.rawResponse);
+			};
+			s3.createBucket("bucket1");
+		}
 		else if(args[0] == "cli_install")
 		{
 			var targetDir:String = (Sys.systemName() == "Mac") ? "/usr/local/bin/" : "/usr/bin";

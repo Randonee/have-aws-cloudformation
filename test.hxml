@@ -1,0 +1,6 @@
+-cp src
+-cp libs
+-cp test
+-main TestMain
+-neko test.n
+-cmd neko test.n
