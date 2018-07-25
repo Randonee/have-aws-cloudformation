@@ -31,11 +31,17 @@ class Main{
 			return;
 		}
 		else if(args[0] == "addBucket"){
+			trace(args);
 			if(args.length != 4){
 				throw ("addBucket requires the name of the bucket and path to creds file as only parameters.");
-			}
-			config = new JsonInputHandler(configDir).handle(sys.io.File.getContent(args[2]));
-			var s3 = new S3(config.creds.accessKey, config.creds.secretKey);
+			}	
+
+			var path = args[2];
+			if(path.charAt(0) != "/")
+				path = args[3] + path;
+
+			var creds = haxe.Json.parse(sys.io.File.getContent(path));
+			var s3 = new S3(creds.accessKey, creds.secretKey);
 			s3.onComplete = onComplete;
 			s3.onError = onError;
 			s3.createBucket(args[1]);
