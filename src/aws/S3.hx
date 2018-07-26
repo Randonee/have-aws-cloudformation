@@ -33,6 +33,7 @@ class S3 extends SignatureVersion4{
     }
 
 	public function addBucketObject(name:String, bucketName:String, data:String){
+		props.contentType = null;
 		props.signedHeaders = 'host;x-amz-acl;x-amz-content-sha256;x-amz-date';
         props.method = "PUT";
 		addHeader("x-amz-acl:public-read");

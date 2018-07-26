@@ -35,6 +35,8 @@ class SignatureVersion4{
 	var used:Bool = false;
 	var payload_hash:String;
 
+	public var stringPayload:Bool = true;
+
 	public var request(default, null):String;
 	var requestPrameters:String = "";
 	var requestHeaders:Array<String> = [];
@@ -122,8 +124,6 @@ class SignatureVersion4{
 			}
 		}
 
-		trace(canonicalHeaders);
-
 		return canonicalHeaders;
 	}	
 
@@ -184,7 +184,6 @@ class SignatureVersion4{
 			socket.connect(new Host(props.host), 443);
 		}
 		catch(msg:Dynamic){
-			trace("ss");
 			finishError(msg);
 			return;
 		}

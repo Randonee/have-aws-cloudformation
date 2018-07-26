@@ -5,6 +5,7 @@ import util.*;
 import sys.FileSystem;
 import sys.io.Process;
 import neko.Lib;
+import haxe.io.Bytes;
 
 using StringTools;
 
@@ -16,6 +17,7 @@ class Main{
 	static var config:Dynamic;
 	static var templateBody:Dynamic;
 	static var cloudFormation:CloudFormation;
+	static var bucketObjects:Array<{name:String, data:Bytes}>;
 
     public static function main(){
 		var args:Array<String> = Sys.args();
@@ -75,19 +77,25 @@ class Main{
 		}
 
 		headS3.onComplete = function(sig){
+			Lib.println('Adding stack file to Bucket');
 			addObject();};
 
 		headS3.onError = function(sig){
+			Lib.println('Creating Bucket');
 			createBucketS3.createBucket(config.bucketName);
 		}
 
 		createBucketS3.onComplete = function(sig){addObject();};
 
 		addObjectS3.onComplete = function(sig){
-			switch(command){
-				case "create": cloudFormation.createStack(config.stack);
-				case "update": cloudFormation.updateStack(config.stack);
+
+			var onRunCloudFormation = function(){
+				switch(command){
+					case "create": cloudFormation.createStack(config.stack);
+					case "update": cloudFormation.updateStack(config.stack);
+				}
 			}
+			addObjectsToBucket(bucketObjects, onRunCloudFormation, onError);
 		}
 
 		headS3.headBucket(config.bucketName);
@@ -112,11 +120,12 @@ class Main{
 		if(args.length == 4)
 			configFile = args[2];
 
-		config = new JsonInputHandler(configDir).handle(sys.io.File.getContent(configDir + configFile));
+		var jih = new JsonInputHandler(configDir);
+		config = jih.handle(sys.io.File.getContent(configDir + configFile));
+		bucketObjects = jih.bucketFiles;
 		templateBody = config.stack.TemplateBody;
 		Reflect.deleteField(config.stack, "TemplateBody");
 		config.stack.TemplateURL = "https://s3-" + config.region + ".amazonaws.com/" + config.bucketName + "/stack.json";
-		trace(config.stack.TemplateURL.toLowerCase());
 		config.stack.TemplateURL = StringTools.urlEncode(config.stack.TemplateURL.toLowerCase());
 
 
@@ -164,5 +173,31 @@ class Main{
 			throw ("Could not find haxelib path  " + library + " - perhaps you need to install it?");
 		}
 		return result;
+	}
+
+	public static function addObjectsToBucket(objects:Array<{name:String, data:Bytes}>, onComplete:Void->Void, onError:SignatureVersion4->Void){
+		var index = 0;
+		var loadNext:Void->Void;
+
+		var onObjComplete = function(sig:SignatureVersion4){
+			++index;
+			loadNext();
+		}
+
+		loadNext = function(){
+			if(index >= objects.length){
+				onComplete();
+			}
+			else{
+				var s3 = new S3(config.creds.accessKey, config.creds.secretKey);
+				s3.onError = onError;
+				s3.onComplete = onObjComplete;
+				Lib.println('Adding ' + objects[index].name + ' file to Bucket');
+				s3.addBucketObject(objects[index].name, config.bucketName, objects[index].data.toString());
+			}
+		}
+
+
+		loadNext();
 	}
 }
