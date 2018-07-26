@@ -6,6 +6,8 @@ import sys.FileSystem;
 import sys.io.Process;
 import neko.Lib;
 
+using StringTools;
+
 
 class Main{
 
@@ -76,12 +78,7 @@ class Main{
 			addObject();};
 
 		headS3.onError = function(sig){
-			if(sig.responseCode == 404){
-				createBucketS3.createBucket(config.bucketName);
-			}
-			else{
-				onError(sig);
-			}
+			createBucketS3.createBucket(config.bucketName);
 		}
 
 		createBucketS3.onComplete = function(sig){addObject();};
@@ -117,8 +114,10 @@ class Main{
 
 		config = new JsonInputHandler(configDir).handle(sys.io.File.getContent(configDir + configFile));
 		templateBody = config.stack.TemplateBody;
-		config.stack.TemplateBody = null;
-		config.stack.TemplateURL = "https://s3-" + config.region + ".amazonaws.com/" + config.stackName + "/stack.json";
+		Reflect.deleteField(config.stack, "TemplateBody");
+		config.stack.TemplateURL = "https://s3-" + config.region + ".amazonaws.com/" + config.bucketName + "/stack.json";
+		trace(config.stack.TemplateURL.toLowerCase());
+		config.stack.TemplateURL = StringTools.urlEncode(config.stack.TemplateURL.toLowerCase());
 
 
 		cloudFormation = new CloudFormation(config.creds.accessKey, config.creds.secretKey);
@@ -135,6 +134,8 @@ class Main{
 
 	static function onError(sig:SignatureVersion4){
 		Lib.println("Error:" + sig.responseCode + "\n" + sig.error + "\n\n" + sig.rawResponse);
+
+		Lib.println("\n\n\n\n" + sig.request);
 	}
 
 	public static function getHaxelib(library:String):String

@@ -51,7 +51,7 @@ class SignatureVersion4Test extends haxe.unit.TestCase {
 				algorithm:'AWS4-HMAC-SHA256'
 			}
 
-		var canonicalRequest = SignatureVersion4.createCanonicalRequest(d, "", props);
+		var canonicalRequest = SignatureVersion4.createCanonicalRequest(d, SignatureVersion4.getRequestHeaders(props, "", d), "", props);
 
 		var exp = "POST\n";
 		exp += "/\n";
@@ -106,7 +106,7 @@ x-amz-date:20150830T123600Z
 host;x-amz-date
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
-		var canonicalRequest = SignatureVersion4.createCanonicalRequest(d, "", props);
+		var canonicalRequest = SignatureVersion4.createCanonicalRequest(d, SignatureVersion4.getRequestHeaders(props, "", d), "", props);
 		assertEquals(conexp, canonicalRequest);
 
 	}
@@ -142,9 +142,15 @@ x-amz-date:20130524T000000Z
 host;x-amz-content-sha256;x-amz-date
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
-		var canonicalRequest = SignatureVersion4.createCanonicalRequest(d, "", props);
+		var canonicalRequest = SignatureVersion4.createCanonicalRequest(d, SignatureVersion4.getRequestHeaders(props, "", d), "", props);
 		assertEquals(conexp, canonicalRequest);
 	}
+
+
+
+
+
+
 }
 
 

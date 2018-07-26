@@ -31,13 +31,13 @@ typedef SignatureVersion4Props = {
 class SignatureVersion4{
 
 	public var props:SignatureVersion4Props;
-	var time:UnixDate = UnixDate.now();
-	var endpoint:String = "";
+	public var time:UnixDate = UnixDate.now();
 	var used:Bool = false;
 	var payload_hash:String;
 
 	public var request(default, null):String;
 	var requestPrameters:String = "";
+	var requestHeaders:Array<String> = [];
 
 	public var responseHeaders(default, null):Array<String>;
 	public var responseCode(default, null):Int;
@@ -73,7 +73,7 @@ class SignatureVersion4{
 		return getDateStamp(time) + '/' + props.region + '/' + props.service + '/' + 'aws4_request';
 	}
 
-	public static function createCanonicalRequest(time:UnixDate, payload:String, props:SignatureVersion4Props):String{
+	public static function createCanonicalRequest(time:UnixDate, requestHeaders:Array<String>, payload:String, props:SignatureVersion4Props):String{
 		var canonical_uri = props.path;
 		var canonical_querystring = '';
 		
@@ -84,7 +84,7 @@ class SignatureVersion4{
 		}
 
 		var payload_hash = createPayloadHash(payload);
-		var canonicalHeaders = createCanonicalHeaders(props, payload, time);
+		var canonicalHeaders = createCanonicalHeaders(props, requestHeaders, payload, time);
 		var canonical_request = props.method + '\n' + canonical_uri + '\n' + canonical_querystring + '\n' + canonicalHeaders + '\n' + props.signedHeaders + '\n' + payload_hash;
 		return canonical_request;
 	}
@@ -93,12 +93,36 @@ class SignatureVersion4{
 		return Sha256.encode(payload);
 	}
 
-	static public function createCanonicalHeaders(props:SignatureVersion4Props, payload:String="", time:UnixDate = null):String{
+	static public function getRequestHeaders(props:SignatureVersion4Props, payload:String, time:UnixDate):Array<String>{
+		var headers:Array<String> = [];
+
+		if(payload != "" && payload != null) headers.push('content-Length: ' + payload.length);
+
+		if(props.contentType != null) headers.push('content-type:' + props.contentType );
+		headers.push('host:' + props.host);
+		if(props.clientContext != null) headers.push('x-amz-client-context:' + props.clientContext);
+		if(props.signedHeaders.indexOf("x-amz-content-sha256") >= 0) headers.push('x-amz-content-sha256:' + createPayloadHash(payload));
+		if(props.signedHeaders.indexOf("amz-date") >= 0) headers.push('x-amz-date:' + getAMZDate(time));
+		if(props.invocationType != null) headers.push('x-amz-invocation-Type:' + props.invocationType);
+		if(props.logType != null) headers.push('x-amz-log-type:' + props.logType);
+		if(props.amzTarget != null) headers.push('x-amz-target:' + props.amzTarget);
+
+		return headers;
+	}
+
+	static public function createCanonicalHeaders(props:SignatureVersion4Props, requestHeaders:Array<String>, payload:String="", time:UnixDate = null):String{
 		var canonicalHeaders = '';
-		if(props.signedHeaders.indexOf("host") >= 0) canonicalHeaders += 'host:' + props.host + '\n';
-		if(props.signedHeaders.indexOf("x-amz-content-sha256") >= 0) canonicalHeaders += 'x-amz-content-sha256:' + createPayloadHash(payload) + '\n';
-		if(props.signedHeaders.indexOf("amz-date") >= 0) canonicalHeaders += 'x-amz-date:' + getAMZDate(time) + '\n';
-		if(props.signedHeaders.indexOf("target") >= 0) canonicalHeaders += 'x-amz-target:' + props.amzTarget + '\n';
+
+		var signedHeaders = props.signedHeaders.split(";");
+
+		for(header in signedHeaders){
+			for(rHeader in requestHeaders){
+				if(rHeader.toLowerCase().indexOf(header.toLowerCase()) >= 0)
+					canonicalHeaders += rHeader + '\n';
+			}
+		}
+
+		trace(canonicalHeaders);
 
 		return canonicalHeaders;
 	}	
@@ -119,27 +143,34 @@ class SignatureVersion4{
 	public function createRequest():String{
 		var request = props.method + " " + props.path + " HTTP/1.1\r\n";
 
-		if(requestPrameters != "" && requestPrameters != null) request += 'Content-Length: ' + requestPrameters.length + '\r\n';
+		requestHeaders = requestHeaders.concat(getRequestHeaders(props, requestPrameters, time));
+		requestHeaders.sort( function(a:String, b:String):Int
+		{
+			a = a.toLowerCase();
+			b = b.toLowerCase();
+			if (a < b) return -1;
+			if (a > b) return 1;
+			return 0;
+		} );
 
-		if(props.contentType != null) request += 'Content-type:' + props.contentType + '\r\n';
-		request += 'Host:' + props.host + '\r\n';
-		if(props.clientContext != null) request += 'x-amz-Client-Context:' + props.clientContext + '\r\n';
-		request += 'x-amz-content-sha256:' + createPayloadHash(requestPrameters) + '\r\n';
-		if(props.signedHeaders.indexOf("amz-date") >= 0) request += 'x-amz-Date:' + getAMZDate(time) + '\r\n';
-		if(props.invocationType != null) request += 'x-amz-Invocation-Type:' + props.invocationType + '\r\n';
-		if(props.logType != null) request += 'x-amz-Log-Type:' + props.logType + '\r\n';
-		if(props.amzTarget != null) request += 'x-amz-Target:' + props.amzTarget + '\r\n';
+		for(header in requestHeaders){
+			request += header + '\r\n';
+		}
 		
-		var canonicalRequest = createCanonicalRequest(time, requestPrameters, props);
+		var canonicalRequest = createCanonicalRequest(time, requestHeaders, requestPrameters, props);
 		var authorizationHeader = createAuthorizationHeader(canonicalRequest, props, time);
 
-		request += 'Authorization:' + authorizationHeader + "\r\n";
+		request += 'Authorization: ' + authorizationHeader + "\r\n";
 		request += 'Connection: close\r\n';
 		request += '\r\n';
 		if(requestPrameters != "" && requestPrameters != null){
 			request += requestPrameters;
 		}
 		return request;
+	}
+
+	public function addHeader(header:String){
+		requestHeaders.push(header);
 	}
 
 	public function call(){
@@ -153,6 +184,7 @@ class SignatureVersion4{
 			socket.connect(new Host(props.host), 443);
 		}
 		catch(msg:Dynamic){
+			trace("ss");
 			finishError(msg);
 			return;
 		}

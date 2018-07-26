@@ -13,12 +13,11 @@ class CloudFormation extends SignatureVersion4{
 				service:'cloudformation',
 				host:'',
 				region:'us-west-2',
-				contentType:'application/json',
 				amzTarget:null,
 				path:null,
-				signedHeaders:'content-type;host;x-amz-date',
+				signedHeaders:'host;x-amz-date',
 				algorithm:'AWS4-HMAC-SHA256',
-				version:"2010-05-15"
+				version:"2012-10-17"
 			}
 			super("", props);
 	}
@@ -31,9 +30,9 @@ class CloudFormation extends SignatureVersion4{
 		setHost();
 		props.method = "POST";
 		props.path = "/";
-		endpoint = "https://" + props.host + props.path;
+		//endpoint = "https://" + props.host + props.path;
 		data = convertArraysToParams(data);
-		var args = "?Action=CreateStack";
+		var args = "?Action=UpdateStack";
 		args += createQueryString(data);
 		props.path += args;
 		call();
@@ -43,7 +42,6 @@ class CloudFormation extends SignatureVersion4{
 		setHost();
 		props.method = "POST";
 		props.path = "/";
-		endpoint = "https://" + props.host + props.path;
 		data = convertArraysToParams(data);
 		var args = "?Action=UpdateStack";
 		args += createQueryString(data);
@@ -115,12 +113,12 @@ class CloudFormation extends SignatureVersion4{
 		setHost();
 		props.method = "POST";
 		props.path = "/";
-		endpoint = "https://" + props.host + props.path;
+		//endpoint = "https://" + props.host + props.path;
 
 		var args = "?Action=ListStacks";
 
 		props.path += args;
-		endpoint += args;
+		//endpoint += args;
 		call();
 	}
 
@@ -129,12 +127,12 @@ class CloudFormation extends SignatureVersion4{
 		setHost();
 		props.method = "POST";
 		props.path = "/";
-		endpoint = "https://" + props.host + props.path;
+		//endpoint = "https://" + props.host + props.path;
 
 		var args = "?Action=DeleteStack&StackName=" + stackName;
 
 		props.path += args;
-		endpoint += args;
+		//endpoint += args;
 		call();
 	}
 
