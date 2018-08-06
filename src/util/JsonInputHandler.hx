@@ -55,12 +55,12 @@ class JsonInputHandler{
         return haxe.crypto.Base64.encode(zip.getBytes());
     }
 
-    function lambdaCode(resolve:String->Dynamic, path:String){
+    function lambdaCode(resolve:String->Dynamic, path:String, version=""){
         var zip = new util.Zip();
         var name = path.split("/").pop();
         zip.add(baseDir + path, name);
-        bucketFiles.push({name:name + ".zip", data:zip.getBytes()});
-        return '{"S3Bucket":"&&bucketName&&", "S3Key":"' + name + '.zip"}';
+        bucketFiles.push({name:name + version + ".zip", data:zip.getBytes()});
+        return '{"S3Bucket":"&&bucketName&&", "S3Key":"' + name + version + '.zip"}';
     }
 
     function urlEncode(resolve:String->Dynamic, str:String):String{

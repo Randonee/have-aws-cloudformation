@@ -147,6 +147,50 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 	}
 
 
+	public function testHeaders2(){
+		//20150830T123600Z
+		var d = UnixDate.fromDay(2015, 7, 29);
+		var t = d.getTime();
+		t += ((12 * 60) + 36) * 60;
+		d = new UnixDate(t);
+		var props = {
+				accessKey:'',
+				secretKey:'',
+				method:'POST',
+				path:'/',
+				service:'service',
+				host:'example.amazonaws.com',
+				region:'us-east-1',
+				contentType:'application/x-amz-json-1.0',
+				amzTarget:'DynamoDB_20120810.CreateTable',
+				signedHeaders:'host;x-amz-date',
+				algorithm:'AWS4-HMAC-SHA256'
+			}
+
+		var canonicalRequest = SignatureVersion4.createCanonicalRequest(d, SignatureVersion4.getRequestHeaders(props, "", d), "", props);
+
+		var exp = "POST\n";
+		exp += "/\n";
+		exp += "\n";
+		exp += "host:example.amazonaws.com\n";
+		exp += "x-amz-date:20150830T123600Z\n";
+		exp += "\n";
+		exp += "host;x-amz-date\n";
+		exp += "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+		assertEquals(exp, canonicalRequest);
+		var strToSignExp = 'AWS4-HMAC-SHA256\n';
+		strToSignExp += '20150830T123600Z\n';
+		strToSignExp += '20150830/us-east-1/service/aws4_request\n';
+		strToSignExp += '553f88c9e4d10fc9e109e2aeb65f030801b70c2f6468faca261d401ae622fc87';
+
+		var scope = SignatureVersion4.getCredentialScope(props, d);
+		var strToSign = SignatureVersion4.getStringToSign(scope, canonicalRequest, props, d);
+
+		assertEquals(strToSignExp, strToSign);
+	}
+
+
 
 
 

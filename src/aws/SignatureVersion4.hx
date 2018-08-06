@@ -114,16 +114,15 @@ class SignatureVersion4{
 
 	static public function createCanonicalHeaders(props:SignatureVersion4Props, requestHeaders:Array<String>, payload:String="", time:UnixDate = null):String{
 		var canonicalHeaders = '';
-
 		var signedHeaders = props.signedHeaders.split(";");
-
+		signedHeaders.sort(alphaSort);
 		for(header in signedHeaders){
 			for(rHeader in requestHeaders){
-				if(rHeader.toLowerCase().indexOf(header.toLowerCase()) >= 0)
+				var headerName = rHeader.split(":")[0];
+				if(headerName.toLowerCase().indexOf(header.toLowerCase()) >= 0)
 					canonicalHeaders += rHeader + '\n';
 			}
 		}
-
 		return canonicalHeaders;
 	}	
 
@@ -144,14 +143,7 @@ class SignatureVersion4{
 		var request = props.method + " " + props.path + " HTTP/1.1\r\n";
 
 		requestHeaders = requestHeaders.concat(getRequestHeaders(props, requestPrameters, time));
-		requestHeaders.sort( function(a:String, b:String):Int
-		{
-			a = a.toLowerCase();
-			b = b.toLowerCase();
-			if (a < b) return -1;
-			if (a > b) return 1;
-			return 0;
-		} );
+		requestHeaders.sort(alphaSort);
 
 		for(header in requestHeaders){
 			request += header + '\r\n';
@@ -275,6 +267,15 @@ class SignatureVersion4{
 		}
 
 		return str;
+	}
+
+	private static function alphaSort(a:String, b:String):Int
+	{
+		a = a.toLowerCase();
+		b = b.toLowerCase();
+		if (a < b) return -1;
+		if (a > b) return 1;
+		return 0;
 	}
 
 }

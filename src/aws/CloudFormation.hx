@@ -32,7 +32,7 @@ class CloudFormation extends SignatureVersion4{
 		props.path = "/";
 		//endpoint = "https://" + props.host + props.path;
 		data = convertArraysToParams(data);
-		var args = "?Action=UpdateStack";
+		var args = "?Action=CreateStack";
 		args += createQueryString(data);
 		props.path += args;
 		call();

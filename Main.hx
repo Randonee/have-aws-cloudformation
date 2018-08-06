@@ -63,13 +63,16 @@ class Main{
 		var addObjectS3 = new S3(config.creds.accessKey, config.creds.secretKey);
 		var headS3 = new S3(config.creds.accessKey, config.creds.secretKey);
 		var createBucketS3 = new S3(config.creds.accessKey, config.creds.secretKey);
+		var bucketPolicy = new S3(config.creds.accessKey, config.creds.secretKey);
 
 		addObjectS3.props.region = config.region;
+		bucketPolicy.props.region = config.region;
 		headS3.props.region = config.region;
 		createBucketS3.props.region = config.region;
 		
 		createBucketS3.onError = onError;
 		addObjectS3.onError = onError;
+		bucketPolicy.onError = onError;
 
 
 		var addObject = function(){
@@ -85,7 +88,12 @@ class Main{
 			createBucketS3.createBucket(config.bucketName);
 		}
 
-		createBucketS3.onComplete = function(sig){addObject();};
+		var onCreateComplete = function(sig){
+			bucketPolicy.addCloudFormationPolicy(config.bucketName);
+		}
+
+		createBucketS3.onComplete = onCreateComplete;
+		bucketPolicy.onComplete = function(sig){addObject();};
 
 		addObjectS3.onComplete = function(sig){
 
@@ -143,7 +151,6 @@ class Main{
 
 	static function onError(sig:SignatureVersion4){
 		Lib.println("Error:" + sig.responseCode + "\n" + sig.error + "\n\n" + sig.rawResponse);
-
 		Lib.println("\n\n\n\n" + sig.request);
 	}
 
