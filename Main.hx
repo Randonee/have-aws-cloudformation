@@ -80,7 +80,6 @@ class Main{
 		}
 
 		headS3.onComplete = function(sig){
-			Lib.println('Adding stack file to Bucket');
 			addObject();};
 
 		headS3.onError = function(sig){

@@ -72,16 +72,18 @@ class JsonInputHandler{
         var json = "";
 
         for(fileName in list){
-            if(FileSystem.isDirectory(baseDir + path + "/" + fileName)){
-                json += dir(resolve, path + "/" + fileName);
-            }
-            else if(fileName.indexOf(".json") > 0){
-                var stackName = fileName.substr(0, fileName.length - 5);
-                json += '"' + stackName + '":';
-                var content = File.getContent(baseDir + path + "/" + fileName);
-                var template = new util.Template(content);
-                json += template.execute({}, this); 
-                json += ",";
+            if(fileName.charAt(0) != "--"){
+                if(FileSystem.isDirectory(baseDir + path + "/" + fileName)){
+                    json += dir(resolve, path + "/" + fileName);
+                }
+                else if(fileName.indexOf(".json") > 0){
+                    var stackName = fileName.substr(0, fileName.length - 5);
+                    json += '"' + stackName + '":';
+                    var content = File.getContent(baseDir + path + "/" + fileName);
+                    var template = new util.Template(content);
+                    json += template.execute({}, this); 
+                    json += ",";
+                }
             }
         }
         return json;
