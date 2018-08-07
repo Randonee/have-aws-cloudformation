@@ -63,12 +63,38 @@ class JsonInputHandler{
         return '{"S3Bucket":"&&bucketName&&", "S3Key":"' + name + version + '.zip"}';
     }
 
+    function dir(resolve:String->Dynamic, path:String){
+        if(!FileSystem.exists(baseDir + path)) throw "Directory Not Found: " + baseDir + path;
+        if(!FileSystem.isDirectory(baseDir + path))  throw "Is not a directory: " + baseDir + path;
+
+        var list = FileSystem.readDirectory(baseDir + path);
+
+        var json = "";
+
+        for(fileName in list){
+            if(FileSystem.isDirectory(baseDir + path + "/" + fileName)){
+                json += dir(resolve, path + "/" + fileName);
+            }
+            else if(fileName.indexOf(".json") > 0){
+                var stackName = fileName.substr(0, fileName.length - 5);
+                json += '"' + stackName + '":';
+                var content = File.getContent(baseDir + path + "/" + fileName);
+                var template = new util.Template(content);
+                json += template.execute({}, this); 
+                json += ",";
+            }
+        }
+        return json;
+    }
+
     function urlEncode(resolve:String->Dynamic, str:String):String{
         return str.urlEncode();
     }
 
-    function quoteEscape(resolve:String->Dynamic, str:String):String{
-        return str.replace("\"", "\\\"");
+    function escape(resolve:String->Dynamic, str:String):String{
+        str = str.replace("\"", "\\\"");
+        str = str.replace("\n", "");
+        return str.replace("\t", "");
     }
 
     function base64File(resolve:String->Dynamic, path:String):String{
