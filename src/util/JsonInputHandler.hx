@@ -10,9 +10,9 @@ class JsonInputHandler{
 
     public var bucketFiles:Array<{name:String, data:Bytes}> = [];
 
-    var baseDir:String;
+    public var baseDir:String;
 
-    public function new(baseDir:String){
+    public function new(baseDir:String=""){
         this.baseDir = baseDir;        
     }
 
@@ -32,6 +32,15 @@ class JsonInputHandler{
         }
     }
 
+    public function parseTemplateFile(path:String):String{
+        if(!FileSystem.exists(baseDir + path)) throw "File Not Found: " + baseDir + path;
+        var content = File.getContent(baseDir + path);
+        var template = new util.Template(content);
+        var data = template.execute({}, this);
+
+        return data;
+    }
+
     public function handle(str:String):Dynamic{
         var template = new util.Template(str);
         var output = template.execute({}, this);
@@ -49,16 +58,16 @@ class JsonInputHandler{
     }
 
     function zipBase64(resolve:String->Dynamic, path:String):String{
-        var zip = new util.Zip();
+        var zip = new util.Zip(this);
         var name = path.split("/").pop();
-        zip.add(baseDir + path, name);
+        zip.add(path, name);
         return haxe.crypto.Base64.encode(zip.getBytes());
     }
 
     function lambdaCode(resolve:String->Dynamic, path:String, version=""){
-        var zip = new util.Zip();
+        var zip = new util.Zip(this);
         var name = path.split("/").pop();
-        zip.add(baseDir + path, name);
+        zip.add(path, name);
         bucketFiles.push({name:name + version + ".zip", data:zip.getBytes()});
         return '{"S3Bucket":"&&bucketName&&", "S3Key":"' + name + version + '.zip"}';
     }
@@ -72,7 +81,7 @@ class JsonInputHandler{
         var json = "";
 
         for(fileName in list){
-            if(fileName.charAt(0) != "--"){
+            if(fileName.charAt(0) != "-"){
                 if(FileSystem.isDirectory(baseDir + path + "/" + fileName)){
                     json += dir(resolve, path + "/" + fileName);
                 }
