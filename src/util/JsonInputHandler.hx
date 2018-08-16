@@ -57,6 +57,10 @@ class JsonInputHandler{
         return template.execute({}, this);
     }
 
+    function replaceString(resolve:String->Dynamic, inSting:String, oldS:String, newS:String):String{
+        return StringTools.replace(inSting, oldS, newS);
+    }
+
     function zipBase64(resolve:String->Dynamic, path:String):String{
         var zip = new util.Zip(this);
         var name = path.split("/").pop();
